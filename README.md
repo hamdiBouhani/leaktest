@@ -35,3 +35,57 @@ any test.
 
 ```bash
 go get github.com/hamdiBouhani/leaktest
+```
+Requires Go 1.18 or later (uses context and error wrapping).
+
+## Usage
+Add a single deferred call at the top of any test that spawns goroutines:
+
+```go
+package mypkg
+
+import (
+    "testing"
+
+    "github.com/hamdiBouhani/leaktest"
+)
+
+func TestSomething(t *testing.T) {
+    defer leaktest.Check(t)()
+
+    // ... test code that may spawn goroutines ...
+}
+```
+Note the double call. leaktest.Check(t) takes the initial snapshot
+immediately and returns a function; the trailing () invokes that function
+at defer time. Forgetting the second () is a common mistake and will cause
+the check to never run.
+
+If the test leaks a goroutine, you'll see something like:
+
+```text 
+--- FAIL: TestSomething (5.02s)
+    leaktest: context deadline exceeded
+    leaktest: leaked goroutine: goroutine 42 [chan receive]:
+        main.worker()
+            /tmp/main.go:20 +0x40
+        created by main.TestSomething
+            /tmp/main_test.go:15 +0x80
+```
+
+## Put the defer first
+Place the defer at the very top of the test body, before any goroutines
+are spawned. Otherwise the initial snapshot will include the very goroutines
+you're trying to track, and leaks will go undetected.
+
+```go
+func TestGood(t *testing.T) {
+    defer leaktest.Check(t)()
+    go worker()  // spawned after snapshot — will be caught if it leaks
+}
+
+func TestBad(t *testing.T) {
+    go worker()  // spawned before snapshot — will NOT be caught
+    defer leaktest.Check(t)()
+}
+```
