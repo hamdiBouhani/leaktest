@@ -1,5 +1,33 @@
 # .github/workflows/ci.yml
-- name: Run examples
-  run: |
-    go run ./examples/basic
-    go run ./examples/http-server
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+
+      - name: Run checks
+        run: task check
+
+      - name: Run examples
+        run: task examples
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.html

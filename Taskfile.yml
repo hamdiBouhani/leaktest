@@ -1,0 +1,10 @@
+# Makefile — thin shim over Taskfile.yml for users who prefer `make`.
+.PHONY: help test test-race cover check examples clean
+
+help:      ; @task
+test:      ; @task test
+test-race: ; @task test:race
+cover:     ; @task cover
+check:     ; @task check
+examples:  ; @task examples
+clean:     ; @task clean
