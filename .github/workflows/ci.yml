@@ -1,0 +1,5 @@
+# .github/workflows/ci.yml
+- name: Run examples
+  run: |
+    go run ./examples/basic
+    go run ./examples/http-server
